@@ -1,0 +1,6 @@
+{% extends "chores/base.html" %}
+{% block title %}Add chore · Hearth{% endblock %}
+{% block content %}
+<section class="page-intro"><p class="eyebrow">New household task</p><h1>Add a chore.</h1><p class="lead">A little clarity now means less mental load later.</p></section>
+<section class="form-card"><form method="post">{% csrf_token %}{{ form.non_field_errors }}{% for field in form %}<label for="{{ field.id_for_label }}">{{ field.label }}{{ field }}{{ field.errors }}</label>{% endfor %}<div class="form-actions"><button class="button" type="submit">Save chore</button><a class="button button-secondary" href="{% url 'dashboard' %}">Cancel</a></div></form></section>
+{% endblock %}
