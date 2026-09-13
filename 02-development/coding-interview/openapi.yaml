@@ -1,0 +1,12 @@
+openapi: 3.0.3
+info: {title: PairPad API, version: 1.0.0}
+paths:
+  /api/sessions:
+    post:
+      summary: Create a collaborative interview session
+      responses: {'201': {description: Created}}
+  /api/sessions/{session_id}:
+    get: {summary: Get a session, responses: {'200': {description: OK}, '404': {description: Missing}}}
+    put: {summary: Persist a document update, responses: {'200': {description: Updated}, '404': {description: Missing}}}
+  /ws/sessions/{session_id}:
+    get: {summary: WebSocket stream for real-time document updates, responses: {'101': {description: Switching protocols}}}

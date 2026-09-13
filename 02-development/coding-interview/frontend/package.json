@@ -1,0 +1,1 @@
+{"name":"pairpad-frontend","private":true,"scripts":{"dev":"vite --host 0.0.0.0","build":"vite build"},"dependencies":{"prismjs":"^1.30.0"},"devDependencies":{"vite":"^7.1.7"}}
