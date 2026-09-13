@@ -32,6 +32,20 @@ Open `http://127.0.0.1:8000`. The container serves both the built frontend and F
 
 The included `render.yaml` configures a Docker Web Service. In Render, create a Blueprint from this repository, select `02-development/coding-interview/render.yaml`, and deploy. It uses the single container above; no server-side code execution is enabled.
 
+The Vercel deployment hosts only the frontend. Deploy the FastAPI backend separately
+(for example, using the Render configuration above), then add this Vercel environment
+variable before redeploying:
+
+```text
+VITE_API_URL=https://your-backend.example.com
+```
+
+Also set this environment variable on the backend to allow the Vercel frontend:
+
+```text
+CORS_ORIGINS=https://your-project.vercel.app
+```
+
 ## Homework answers
 
 1. Initial prompt: “Build a full-stack collaborative coding interview platform with shareable rooms, WebSocket edits, JavaScript/Python highlighting, browser-only code execution, persistence, tests, documentation, and Docker.”

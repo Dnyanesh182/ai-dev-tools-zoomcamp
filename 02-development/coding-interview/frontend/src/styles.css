@@ -18,6 +18,17 @@ main {
   padding: 48px 24px;
 }
 
+.error-state {
+  max-width: 760px;
+}
+
+code {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #263247;
+  color: #dbe7f6;
+}
+
 header {
   display: flex;
   justify-content: space-between;

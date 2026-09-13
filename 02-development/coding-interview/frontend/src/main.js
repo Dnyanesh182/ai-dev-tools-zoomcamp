@@ -3,10 +3,12 @@ import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-javascript';
 import './styles.css';
 
+const configuredApi = import.meta.env.VITE_API_URL?.replace(/\/$/, '');
 const api =
-  location.port === '5173'
+  configuredApi ||
+  (location.port === '5173'
     ? `${location.protocol}//${location.hostname}:8000`
-    : '';
+    : '');
 const wsApi = api
   ? api.replace(/^http/, 'ws')
   : `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`;
@@ -15,6 +17,20 @@ let socket;
 let timer;
 
 const app = document.querySelector('#app');
+
+function showError(error) {
+  app.innerHTML = `
+    <main class="error-state">
+      <p class="eyebrow">PairPad</p>
+      <h1>PairPad could not connect.</h1>
+      <p class="muted">${error.message}</p>
+      <p class="muted">
+        Configure the Vercel <code>VITE_API_URL</code> environment variable
+        with the public URL of the running FastAPI backend, then redeploy.
+      </p>
+    </main>
+  `;
+}
 
 async function pythonRuntime() {
   const indexURL = 'https://cdn.jsdelivr.net/pyodide/v0.27.0/full/';
@@ -36,6 +52,9 @@ async function pythonRuntime() {
 
 async function create() {
   const response = await fetch(`${api}/api/sessions`, { method: 'POST' });
+  if (!response.ok) {
+    throw new Error(`Backend returned HTTP ${response.status}.`);
+  }
   const session = await response.json();
   location.href = `/session/${session.id}`;
 }
@@ -167,9 +186,16 @@ function render(session) {
 }
 
 if (!sessionId || sessionId === '') {
-  create();
+  create().catch(showError);
 } else {
   fetch(`${api}/api/sessions/${sessionId}`)
-    .then((response) => (response.ok ? response.json() : create()))
-    .then(render);
+    .then((response) => {
+      if (response.ok) {
+        return response.json();
+      }
+
+      return create();
+    })
+    .then(render)
+    .catch(showError);
 }

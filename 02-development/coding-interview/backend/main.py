@@ -1,4 +1,5 @@
 import json
+import os
 import sqlite3
 import uuid
 from pathlib import Path
@@ -11,9 +12,17 @@ from pydantic import BaseModel, Field
 
 DB = Path(__file__).with_name("pairpad.db")
 app = FastAPI(title="PairPad API", version="1.0.0")
+cors_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173",
+    ).split(",")
+    if origin.strip()
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=cors_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
