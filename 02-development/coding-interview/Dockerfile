@@ -1,10 +1,15 @@
-FROM node:22-bookworm-slim
-RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-pip && rm -rf /var/lib/apt/lists/*
-WORKDIR /app
+FROM node:22-bookworm-slim AS frontend-build
+WORKDIR /build
 COPY package*.json ./
 RUN npm install
+COPY frontend ./frontend
+RUN npm run build
+
+FROM python:3.14-slim
+WORKDIR /app
 COPY requirements.txt ./
-RUN pip3 install --break-system-packages -r requirements.txt
-COPY . .
-EXPOSE 8000 5173
-CMD ["npm", "run", "dev"]
+RUN pip install --no-cache-dir -r requirements.txt
+COPY backend ./backend
+COPY --from=frontend-build /build/frontend/dist ./frontend/dist
+EXPOSE 8000
+CMD ["sh", "-c", "uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

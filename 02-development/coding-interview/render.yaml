@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: pairpad-coding-interview
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /docs

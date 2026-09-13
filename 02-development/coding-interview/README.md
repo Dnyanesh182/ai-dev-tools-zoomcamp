@@ -23,8 +23,14 @@ npm run build
 
 ```powershell
 docker build -t pairpad .
-docker run -p 5173:5173 -p 8000:8000 pairpad
+docker run -p 8000:8000 pairpad
 ```
+
+Open `http://127.0.0.1:8000`. The container serves both the built frontend and FastAPI backend from one port.
+
+## Deploy
+
+The included `render.yaml` configures a Docker Web Service. In Render, create a Blueprint from this repository, select `02-development/coding-interview/render.yaml`, and deploy. It uses the single container above; no server-side code execution is enabled.
 
 ## Homework answers
 

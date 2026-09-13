@@ -1,6 +1,8 @@
 import json, sqlite3, uuid
 from pathlib import Path
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -60,3 +62,12 @@ async def collaborate(socket: WebSocket, session_id: str):
                 record = save(session_id, Update(code=message["code"], language=message["language"])); await broadcast(session_id, {"type":"document", **record})
     except WebSocketDisconnect: pass
     finally: clients[session_id] = [s for s in clients.get(session_id, []) if s is not socket]
+
+DIST = Path(__file__).parent.parent / "frontend" / "dist"
+if DIST.exists():
+    app.mount("/assets", StaticFiles(directory=DIST / "assets"), name="assets")
+
+    @app.get("/")
+    @app.get("/session/{session_id}")
+    def frontend(session_id: str | None = None):
+        return FileResponse(DIST / "index.html")

@@ -1,5 +1,5 @@
 import Prism from 'prismjs'; import 'prismjs/components/prism-python'; import 'prismjs/components/prism-javascript'; import './styles.css';
-const api='http://127.0.0.1:8000'; let sessionId=location.pathname.split('/').pop(); let socket, timer;
+const api=location.port==='5173'?`${location.protocol}//${location.hostname}:8000`:''; const wsApi=api?api.replace(/^http/,'ws'):`${location.protocol==='https:'?'wss':'ws'}://${location.host}`; let sessionId=location.pathname.split('/').pop(); let socket, timer;
 const app=document.querySelector('#app');
 async function pythonRuntime(){if(globalThis.loadPyodide)return globalThis.loadPyodide({indexURL:'https://cdn.jsdelivr.net/pyodide/v0.27.0/full/'});await new Promise((ok,bad)=>{const tag=document.createElement('script');tag.src='https://cdn.jsdelivr.net/pyodide/v0.27.0/full/pyodide.js';tag.onload=ok;tag.onerror=bad;document.head.append(tag)});return globalThis.loadPyodide({indexURL:'https://cdn.jsdelivr.net/pyodide/v0.27.0/full/'})}
 async function create(){const r=await fetch(`${api}/api/sessions`,{method:'POST'}); const s=await r.json(); location.href=`/session/${s.id}`}
@@ -8,5 +8,5 @@ function render(s){app.innerHTML=`<main><header><div><p class="eyebrow">PairPad<
  document.querySelector('#new').onclick=create; document.querySelector('#copy').onclick=()=>navigator.clipboard.writeText(location.href);
  code.oninput=()=>{paint();clearTimeout(timer);timer=setTimeout(()=>socket?.send(JSON.stringify({type:'update',code:code.value,language:language.value})),250)}; language.onchange=()=>{paint();socket?.send(JSON.stringify({type:'update',code:code.value,language:language.value}))};
  document.querySelector('#run').onclick=async()=>{const out=document.querySelector('#output');out.textContent='Running…';try{if(language.value==='javascript'){out.textContent=String(Function(`"use strict";${code.value}`)() ?? 'Finished.')}else{const py=await pythonRuntime();out.textContent=String(await py.runPythonAsync(code.value) ?? 'Finished.')}}catch(e){out.textContent=`Error: ${e.message}`}};
- socket=new WebSocket(`ws://127.0.0.1:8000/ws/sessions/${s.id}`);socket.onmessage=e=>{const d=JSON.parse(e.data);if(d.type==='document'&&d.code!==code.value){code.value=d.code;language.value=d.language;paint()}};socket.onclose=()=>document.querySelector('#status').textContent='Reconnecting…';}
+ socket=new WebSocket(`${wsApi}/ws/sessions/${s.id}`);socket.onmessage=e=>{const d=JSON.parse(e.data);if(d.type==='document'&&d.code!==code.value){code.value=d.code;language.value=d.language;paint()}};socket.onclose=()=>document.querySelector('#status').textContent='Reconnecting…';}
 if(!sessionId || sessionId===''){create()} else fetch(`${api}/api/sessions/${sessionId}`).then(r=>r.ok?r.json():create()).then(render);
