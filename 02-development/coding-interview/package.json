@@ -1,1 +1,16 @@
-{"name":"pairpad","private":true,"scripts":{"dev":"concurrently \"py -m uvicorn backend.main:app --reload --port 8000\" \"npm --prefix frontend run dev\"","test":"py -m pytest tests -q","build":"npm --prefix frontend run build && node -e \"const fs=require('fs'); fs.rmSync('dist',{recursive:true,force:true}); fs.cpSync('frontend/dist','dist',{recursive:true})\""},"dependencies":{"prismjs":"^1.30.0"},"devDependencies":{"concurrently":"^9.2.1","vite":"^7.1.7"}}
+{
+  "name": "pairpad",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"py -m uvicorn backend.main:app --reload --port 8000\" \"npm --prefix frontend run dev\"",
+    "test": "py -m pytest tests -q",
+    "build": "npm --prefix frontend run build && node -e \"const fs=require('fs'); fs.rmSync('dist',{recursive:true,force:true}); fs.cpSync('frontend/dist','dist',{recursive:true})\""
+  },
+  "dependencies": {
+    "prismjs": "^1.30.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "vite": "^7.1.7"
+  }
+}
