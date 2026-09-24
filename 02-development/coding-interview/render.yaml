@@ -2,6 +2,7 @@ services:
   - type: web
     name: pairpad-coding-interview
     runtime: docker
+    region: oregon
     rootDir: ./02-development/coding-interview
     dockerfilePath: ./Dockerfile
     healthCheckPath: /healthz
@@ -16,3 +17,4 @@ databases:
     databaseName: pairpad
     user: pairpad
     plan: free
+    region: oregon
