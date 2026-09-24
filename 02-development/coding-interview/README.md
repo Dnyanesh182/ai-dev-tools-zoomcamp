@@ -1,6 +1,10 @@
 # PairPad — collaborative coding interviews
 
-PairPad creates shareable coding rooms. Participants edit Python or JavaScript together through WebSockets. PrismJS provides syntax highlighting; Python runs through **Pyodide (WASM)** in the participant's browser, never on the server.
+PairPad creates shareable coding rooms. Participants edit Python or JavaScript together through WebSockets and can launch browser-based video calls through **WebRTC** in the same interview room. PrismJS provides syntax highlighting; Python runs through **Pyodide (WASM)** in the participant's browser, never on the server.
+
+## Live demo
+
+https://pairpad-coding-interview.onrender.com/
 
 ## Run
 
@@ -10,7 +14,13 @@ npm install
 npm run dev
 ```
 
-Open `http://127.0.0.1:5173`. The frontend calls FastAPI at port 8000.
+Open `http://127.0.0.1:5173`. During local development, the frontend calls FastAPI at port 8001 to avoid collisions with Docker or other services using port 8000.
+
+The browser asks for camera and microphone permission only after you select
+**Start video call**. Localhost is a secure browser context. Production
+deployments must use HTTPS. PairPad uses Google STUN servers for local
+connectivity; production deployments should configure a TURN service for
+corporate networks and other restrictive NATs.
 
 ## Verify
 
@@ -27,6 +37,15 @@ docker run -p 8000:8000 pairpad
 ```
 
 Open `http://127.0.0.1:8000`. The container serves both the built frontend and FastAPI backend from one port.
+
+For the complete production-like stack (including Postgres), use:
+
+```powershell
+docker compose up --build
+```
+
+See [testing](docs/testing.md), [deployment](docs/deployment.md), and the
+[release process](docs/release-process.md) for the CI/CD and rollback procedures.
 
 ## Deploy
 
@@ -50,7 +69,7 @@ CORS_ORIGINS=https://your-project.vercel.app
 
 1. Initial prompt: “Build a full-stack collaborative coding interview platform with shareable rooms, WebSocket edits, JavaScript/Python highlighting, browser-only code execution, persistence, tests, documentation, and Docker.”
 2. Tests: `npm test`
-3. Dev command: `concurrently "uvicorn backend.main:app --reload --port 8000" "npm --prefix frontend run dev"`
+3. Dev command: `concurrently "uvicorn backend.main:app --reload --port 8001" "npm --prefix frontend run dev"`
 4. Highlighting: PrismJS
 5. Python WASM: Pyodide
 6. Docker base image: `node:22-bookworm-slim`

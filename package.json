@@ -1,0 +1,10 @@
+{
+  "name": "ai-dev-tools-zoomcamp",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix 02-development/coding-interview run dev",
+    "test": "npm --prefix 02-development/coding-interview test",
+    "build": "npm --prefix 02-development/coding-interview run build",
+    "compile": "py -m compileall -q 02-development/coding-interview/backend 02-development/coding-interview/tests"
+  }
+}

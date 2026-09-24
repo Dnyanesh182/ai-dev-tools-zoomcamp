@@ -1,7 +1,7 @@
 import json
 import os
-import sqlite3
 import uuid
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
@@ -10,16 +10,27 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-DB = Path(__file__).with_name("pairpad.db")
-app = FastAPI(title="PairPad API", version="1.0.0")
-cors_origins = [
+from backend.database import SQLITE_DB, connection, placeholder, row_to_dict
+from backend.migrate import apply_migrations
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """Apply pending schema changes before the service accepts traffic."""
+    apply_migrations()
+    yield
+
+
+# Kept as a public compatibility alias for the local test suite.
+DB = SQLITE_DB
+app = FastAPI(title="PairPad API", version="1.0.0", lifespan=lifespan)
+local_cors_origins = {"http://localhost:5173", "http://127.0.0.1:5173"}
+configured_cors_origins = {
     origin.strip()
-    for origin in os.getenv(
-        "CORS_ORIGINS",
-        "http://localhost:5173,http://127.0.0.1:5173",
-    ).split(",")
+    for origin in os.getenv("CORS_ORIGINS", "").split(",")
     if origin.strip()
-]
+}
+cors_origins = sorted(local_cors_origins | configured_cors_origins)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
@@ -34,39 +45,38 @@ class Update(BaseModel):
     language: str = Field(pattern="^(python|javascript)$")
 
 
-def conn():
-    db = sqlite3.connect(DB)
-    db.row_factory = sqlite3.Row
-    db.execute(
-        "CREATE TABLE IF NOT EXISTS sessions "
-        "(id TEXT PRIMARY KEY, code TEXT NOT NULL, language TEXT NOT NULL)"
-    )
-    return db
+class WebRTCSignal(BaseModel):
+    type: str = "webrtc-signal"
+    peerId: str = Field(min_length=1, max_length=100)
+    remotePeerId: str | None = Field(default=None, min_length=1, max_length=100)
+    signalType: str = Field(pattern="^(offer|answer|candidate)$")
+    offer: dict | None = None
+    answer: dict | None = None
+    candidate: dict | None = None
 
 
 def read(session_id):
-    db = conn()
-    row = db.execute(
-        "SELECT * FROM sessions WHERE id=?", (session_id,)
-    ).fetchone()
-    db.close()
+    with connection() as db:
+        cursor = db.cursor()
+        cursor.execute(placeholder("SELECT * FROM sessions WHERE id=?"), (session_id,))
+        row = row_to_dict(cursor, cursor.fetchone())
 
     if not row:
         raise HTTPException(404, "Session not found")
 
-    return dict(row)
+    return row
 
 
 def save(session_id, update):
-    db = conn()
-    result = db.execute(
-        "UPDATE sessions SET code=?, language=? WHERE id=?",
-        (update.code, update.language, session_id),
-    )
-    db.commit()
-    db.close()
+    with connection() as db:
+        cursor = db.cursor()
+        cursor.execute(
+            placeholder("UPDATE sessions SET code=?, language=? WHERE id=?"),
+            (update.code, update.language, session_id),
+        )
+        updated = cursor.rowcount
 
-    if not result.rowcount:
+    if not updated:
         raise HTTPException(404, "Session not found")
 
     return read(session_id)
@@ -80,10 +90,11 @@ def create_session():
         "code": "# Start coding here\nprint('Hello, candidate!')",
         "language": "python",
     }
-    db = conn()
-    db.execute("INSERT INTO sessions VALUES (:id,:code,:language)", record)
-    db.commit()
-    db.close()
+    with connection() as db:
+        db.cursor().execute(
+            placeholder("INSERT INTO sessions (id, code, language) VALUES (?, ?, ?)"),
+            (record["id"], record["code"], record["language"]),
+        )
 
     return {**record, "share_url": f"/session/{session_id}"}
 
@@ -93,10 +104,17 @@ def get_session(session_id: str):
     return read(session_id)
 
 
-async def broadcast(session_id, payload):
+@app.get("/healthz")
+def health_check():
+    return {"status": "ok"}
+
+
+async def broadcast(session_id, payload, exclude=None):
     stale = []
 
     for socket in clients.get(session_id, []):
+        if socket is exclude:
+            continue
         try:
             await socket.send_json(payload)
         except Exception:
@@ -135,6 +153,10 @@ async def collaborate(socket: WebSocket, session_id: str):
                     Update(code=message["code"], language=message["language"]),
                 )
                 await broadcast(session_id, {"type": "document", **record})
+            elif message.get("type") == "webrtc-signal":
+                signal = WebRTCSignal(**message)
+                payload = signal.model_dump(exclude_none=True)
+                await broadcast(session_id, payload, exclude=socket)
     except WebSocketDisconnect:
         pass
     finally:

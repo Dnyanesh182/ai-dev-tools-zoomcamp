@@ -1,0 +1,28 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://pairpad:pairpad@db:5432/pairpad
+      CORS_ORIGINS: http://localhost:8000
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: pairpad
+      POSTGRES_USER: pairpad
+      POSTGRES_PASSWORD: pairpad
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pairpad -d pairpad"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

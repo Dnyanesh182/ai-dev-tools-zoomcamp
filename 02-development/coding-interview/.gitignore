@@ -1,6 +1,7 @@
 node_modules/
 frontend/node_modules/
 backend/*.db
+tests/integration/.pairpad-test.db
 __pycache__/
 .venv/
 dist/

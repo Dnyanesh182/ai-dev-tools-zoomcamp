@@ -3,6 +3,12 @@ info:
   title: PairPad API
   version: 1.0.0
 paths:
+  /healthz:
+    get:
+      summary: Report service health for deployment checks
+      responses:
+        '200':
+          description: Service is healthy
   /api/sessions:
     post:
       summary: Create a collaborative interview session
@@ -24,7 +30,12 @@ paths:
           description: Missing
   /ws/sessions/{session_id}:
     get:
-      summary: WebSocket stream for real-time document updates
+      summary: WebSocket stream for document updates and WebRTC signaling
+      description: |
+        Clients send update messages for document changes and validated
+        webrtc-signal messages containing offer, answer, or ICE candidate data.
+        WebRTC signals are relayed to other clients in the same session and
+        are not echoed to the sending client.
       responses:
         '101':
           description: Switching protocols
