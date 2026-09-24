@@ -2,6 +2,7 @@ services:
   - type: web
     name: pairpad-coding-interview
     runtime: docker
+    plan: free
     region: oregon
     rootDir: ./02-development/coding-interview
     dockerfilePath: ./Dockerfile
