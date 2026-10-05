@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["run_id", "tool", "finding_id", "severity", "summary", "human_disposition"],
+  "properties": {
+    "run_id": {"type": "string"},
+    "tool": {"type": "string", "enum": ["semgrep", "model-review", "human-review", "snyk-agent-scan"]},
+    "finding_id": {"type": "string"},
+    "severity": {"type": "string", "enum": ["low", "medium", "high", "critical"]},
+    "summary": {"type": "string", "maxLength": 2000},
+    "human_disposition": {"type": "string", "enum": ["open", "accepted-risk", "fixed", "not-a-finding"]}
+  }
+}

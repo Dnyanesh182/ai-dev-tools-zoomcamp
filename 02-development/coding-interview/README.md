@@ -45,7 +45,9 @@ docker compose up --build
 ```
 
 See [testing](docs/testing.md), [deployment](docs/deployment.md), and the
-[release process](docs/release-process.md) for the CI/CD and rollback procedures.
+[release process](docs/release-process.md) for the CI/CD and rollback procedures. The
+[operations and security report](docs/operations-and-security-report.md) describes the
+OpenTelemetry, alerting, responder, and security-audit setup added for Homework 4.
 
 ## Deploy
 

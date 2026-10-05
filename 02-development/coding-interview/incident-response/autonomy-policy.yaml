@@ -1,0 +1,19 @@
+version: 1
+default: require_human_approval
+actions:
+  rollback_last_known_good:
+    autonomy: approval_required
+    command: incident-response/runbooks/rollback.sh
+    allowed_when:
+      - alert_name == PairPadSessionApiHighErrorRate
+      - evidence_packet_complete == true
+      - on_call_approver_present == true
+    prohibited:
+      - database writes
+      - credential access
+      - changes to application source
+audit:
+  record_model: true
+  record_prompt_template_version: true
+  record_policy_decision: true
+  record_executed_command: true

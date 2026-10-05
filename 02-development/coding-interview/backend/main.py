@@ -9,9 +9,39 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+from opentelemetry import metrics, trace
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
 
 from backend.database import SQLITE_DB, connection, placeholder, row_to_dict
 from backend.migrate import apply_migrations
+
+
+SERVICE_NAME = "pairpad-api"
+
+
+def configure_telemetry():
+    """Export request traces and metrics without recording interview content."""
+    endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+    if not endpoint:
+        return
+
+    resource = Resource.create({"service.name": SERVICE_NAME})
+    tracer_provider = TracerProvider(resource=resource)
+    tracer_provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint)))
+    trace.set_tracer_provider(tracer_provider)
+
+    metric_reader = PeriodicExportingMetricReader(OTLPMetricExporter(endpoint=endpoint))
+    metrics.set_meter_provider(MeterProvider(resource=resource, metric_readers=[metric_reader]))
+
+
+configure_telemetry()
 
 
 @asynccontextmanager
@@ -24,6 +54,7 @@ async def lifespan(_app: FastAPI):
 # Kept as a public compatibility alias for the local test suite.
 DB = SQLITE_DB
 app = FastAPI(title="PairPad API", version="1.0.0", lifespan=lifespan)
+FastAPIInstrumentor.instrument_app(app, excluded_urls="healthz")
 local_cors_origins = {"http://localhost:5173", "http://127.0.0.1:5173"}
 configured_cors_origins = {
     origin.strip()

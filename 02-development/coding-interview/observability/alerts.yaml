@@ -1,0 +1,19 @@
+groups:
+  - name: pairpad-user-impact
+    rules:
+      - alert: PairPadSessionApiHighErrorRate
+        expr: |
+          (
+            sum(rate(http_server_request_duration_milliseconds_count{service_name="pairpad-api",http_route=~"/api/sessions.*",http_response_status_code=~"5.."}[5m]))
+            /
+            clamp_min(sum(rate(http_server_request_duration_milliseconds_count{service_name="pairpad-api",http_route=~"/api/sessions.*"}[5m])), 1)
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: page
+          service: pairpad-api
+          user_journey: create-or-join-session
+        annotations:
+          summary: "PairPad session API is failing for users"
+          description: "More than 5% of session API requests have returned 5xx for five minutes. Collect an evidence packet before proposing an action."
+          runbook: "incident-response/runbooks/rollback.sh"

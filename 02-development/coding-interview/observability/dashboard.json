@@ -1,0 +1,19 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Session API request rate",
+      "targets": [{"expr": "sum(rate(http_server_request_duration_milliseconds_count{service_name=\"pairpad-api\",http_route=~\"/api/sessions.*\"}[5m]))", "legendFormat": "requests/s"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "Session API 5xx rate",
+      "targets": [{"expr": "sum(rate(http_server_request_duration_milliseconds_count{service_name=\"pairpad-api\",http_route=~\"/api/sessions.*\",http_response_status_code=~\"5..\"}[5m]))", "legendFormat": "5xx/s"}]
+    }
+  ],
+  "schemaVersion": 39,
+  "title": "PairPad service health",
+  "version": 1
+}
